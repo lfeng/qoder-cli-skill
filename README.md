@@ -2,17 +2,18 @@
 
 🤖 Delegate coding tasks to Qoder CLI with full feature support.
 
+## ⚠️ Important: Print Mode Only
+
+**TUI mode is NOT supported** in OpenClaw or other automated environments. This skill uses **Print mode** (`-p` flag) for all operations.
+
 ## Features
 
-- ✅ **TUI Mode** - Interactive terminal UI with PTY support
-- ✅ **Print Mode** - Non-interactive automation
+- ✅ **Print Mode** - Non-interactive automation (TTY-free)
 - ✅ **Subagents** - Specialized AI agents for specific tasks
 - ✅ **Worktrees** - Parallel development with Git worktrees
 - ✅ **MCP Servers** - Extend with Model Context Protocol tools
 - ✅ **Quest Mode** - Spec-driven delegated development
 - ✅ **Memory System** - AGENTS.md for project context
-- ✅ **Custom Commands** - Extendable slash commands
-- ✅ **Hooks** - Notification and integration hooks
 - ✅ **Granular Permissions** - Fine-grained access control
 - ✅ **Model Selection** - Auto-routing or manual model selection
 - ✅ **All-Sessions Ready** - Works in group chats, DMs, and shared workspaces
@@ -97,25 +98,23 @@ Once installed, the skill is automatically available in OpenClaw. Just ask:
 
 ```
 qoder-agent/
-├── SKILL.md          # Main skill documentation and instructions
+├── SKILL.md          # Main skill documentation (Print mode focus)
 ├── README.md         # This file
 ├── LICENSE           # MIT License
-└── examples/         # Usage examples (optional)
+└── .gitignore        # Standard ignore patterns
 ```
 
 ## Documentation
 
 See [SKILL.md](SKILL.md) for complete usage documentation including:
 
-- TUI mode and input modes
 - Print mode flags and options
 - Subagent creation and usage
 - Worktree parallel jobs
 - MCP server integration
 - Permission configuration
 - Memory system (AGENTS.md)
-- Custom commands
-- Hooks setup
+- Model selection guide
 - Troubleshooting
 
 ## Examples
@@ -131,20 +130,9 @@ qodercli --model=ultimate -p "Refactor the authentication module"
 
 # JSON output
 qodercli --output-format=json -p "Analyze src/"
-```
 
-### Interactive Session (TUI Mode)
-
-```bash
-# Start TUI (requires PTY)
-qodercli
-
-# In TUI, use slash commands:
-/login      # Authenticate
-/init       # Initialize AGENTS.md
-/quest      # Spec-driven development
-/review     # Code review
-/agents     # Manage subagents
+# Continue last session
+qodercli -c -p "Continue the refactoring"
 ```
 
 ### Subagents
@@ -226,9 +214,8 @@ Configure in `~/.qoder/settings.json` or `${project}/.qoder/settings.json`:
 # Set environment variable
 export QODER_PERSONAL_ACCESS_TOKEN="your_token"
 
-# Or use TUI login
-qodercli
-/login
+# Check status
+qodercli status
 ```
 
 ### Permission Denied
@@ -240,11 +227,16 @@ qodercli --yolo -p "task"
 # Or configure permissions
 ```
 
-### TUI Not Working
+### TUI Mode Error
+
+**TUI mode is NOT supported in OpenClaw.** Always use Print mode:
 
 ```bash
-# Ensure PTY mode in OpenClaw
-# The skill automatically uses pty:true for TUI mode
+# ✅ Correct
+qodercli -p "Your task"
+
+# ❌ Wrong (will fail)
+qodercli  # TUI requires interactive terminal
 ```
 
 ## Contributing

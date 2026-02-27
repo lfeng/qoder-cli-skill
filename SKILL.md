@@ -1,15 +1,15 @@
 ---
 name: qoder-agent
-description: 'Delegate coding tasks to Qoder CLI. Use when: (1) building/creating new features or apps, (2) code reviews, (3) refactoring, (4) iterative coding that needs file exploration. Supports TUI mode, print mode, subagents, worktrees, MCP servers, quest mode, and hooks. Works in all session types (direct chat, group chat, Discord, etc.). NOT for: simple one-liner fixes (just edit), reading code (use read tool). Requires qodercli installed.'
+description: 'Delegate coding tasks to Qoder CLI using Print mode (non-interactive). Use when: (1) building/creating new features or apps, (2) code reviews, (3) refactoring, (4) iterative coding that needs file exploration. Supports subagents, worktrees, MCP servers, quest mode, and hooks. Works in all session types (direct chat, group chat, Discord, etc.). NOT for: simple one-liner fixes (just edit), reading code (use read tool). Requires qodercli installed.'
 metadata:
   {
     "openclaw": { "emoji": "🤖", "requires": { "anyBins": ["qodercli"] } },
   }
 ---
 
-# Qoder Agent (bash-first, all-sessions)
+# Qoder Agent (Print Mode - Non-Interactive)
 
-Use **bash** (with optional background mode) for all Qoder CLI work. Simple and effective.
+**Use Print mode (`-p`)** for all Qoder CLI work in OpenClaw. TUI mode is not supported in automated environments.
 
 **✅ All-Sessions Ready:** This skill works in:
 - Direct 1:1 chats
@@ -19,43 +19,19 @@ Use **bash** (with optional background mode) for all Qoder CLI work. Simple and 
 
 ---
 
-## ⚠️ PTY Mode Required!
+## ⚠️ Important: Print Mode Only
 
-Qoder CLI TUI mode is an **interactive terminal application** that needs a pseudo-terminal (PTY) to work correctly. Without PTY, you'll get broken output, missing colors, or the CLI may hang.
+**TUI mode is NOT supported** in OpenClaw or other automated environments due to TTY requirements.
 
-**Always use `pty:true`** when running Qoder CLI in TUI mode:
+**Always use Print mode** with the `-p` flag:
 
 ```bash
-# ✅ Correct - with PTY
-bash pty:true command:"qodercli -w /path/to/project"
+# ✅ Correct - Print mode (non-interactive)
+bash workdir:~/project command:"qodercli -p 'Add error handling'"
 
-# ❌ Wrong - no PTY, TUI may break
-bash command:"qodercli -w /path/to/project"
+# ❌ Wrong - TUI mode requires interactive terminal
+bash pty:true command:"qodercli"  # Will fail
 ```
-
-### Bash Tool Parameters
-
-| Parameter    | Type    | Description                                                                 |
-| ------------ | ------- | --------------------------------------------------------------------------- |
-| `command`    | string  | The shell command to run                                                    |
-| `pty`        | boolean | **Use for TUI mode!** Allocates a pseudo-terminal for interactive CLI       |
-| `workdir`    | string  | Working directory (Qoder sees only this folder's context)                   |
-| `background` | boolean | Run in background, returns sessionId for monitoring                         |
-| `timeout`    | number  | Timeout in seconds (kills process on expiry)                                |
-| `elevated`   | boolean | Run on host instead of sandbox (if allowed)                                 |
-
-### Process Tool Actions (for background sessions)
-
-| Action      | Description                                          |
-| ----------- | ---------------------------------------------------- |
-| `list`      | List all running/recent sessions                     |
-| `poll`      | Check if session is still running                    |
-| `log`       | Get session output (with optional offset/limit)      |
-| `write`     | Send raw data to stdin                               |
-| `submit`    | Send data + newline (like typing and pressing Enter) |
-| `send-keys` | Send key tokens or hex bytes                         |
-| `paste`     | Paste text (with optional bracketed mode)            |
-| `kill`      | Terminate the session                                |
 
 ---
 
@@ -77,10 +53,10 @@ qodercli status
 
 ## 🚀 Quick Start
 
-### Print Mode (Non-Interactive) - Recommended for Most Tasks
+### Basic Usage
 
 ```bash
-# Basic one-shot task (no PTY needed)
+# Quick one-shot task
 bash workdir:~/project command:"qodercli -p 'Add error handling to the API calls'"
 
 # With ultimate model for best quality
@@ -89,79 +65,15 @@ bash workdir:~/project command:"qodercli --model=ultimate -p 'Refactor this modu
 # With JSON output
 bash workdir:~/project command:"qodercli --output-format=json -p 'Analyze this code'"
 
-# Yolo mode (skip permission checks)
-bash workdir:~/project command:"qodercli --yolo -p 'Make the changes'"
-
 # Continue last session
 bash workdir:~/project command:"qodercli -c -p 'Continue the refactoring'"
 
 # Max turns limit
 bash workdir:~/project command:"qodercli --max-turns=10 -p 'Fix the bug'"
+
+# Yolo mode (skip permissions)
+bash workdir:~/project command:"qodercli --yolo -p 'Make the changes'"
 ```
-
-### TUI Mode (Interactive)
-
-```bash
-# Start TUI in project directory (with PTY!)
-bash pty:true workdir:~/project command:"qodercli"
-
-# Continue last session
-bash pty:true workdir:~/project command:"qodercli -c"
-
-# Resume specific session
-bash pty:true workdir:~/project command:"qodercli -r <session-id>"
-
-# Background for longer work
-bash pty:true workdir:~/project background:true command:"qodercli"
-```
-
----
-
-## 📋 TUI Mode Details
-
-### Input Modes
-
-| Mode | Command | Description |
-|------|---------|-------------|
-| `>` | Default | Dialog mode - chat with the CLI |
-| `!` | Type `!` | Bash mode - run shell commands directly |
-| `/` | Type `/` | Slash mode - built-in commands |
-| `#` | Type `#` | Memory mode - edit AGENTS.md |
-| `\` + `⏎` | Type `\` then Enter | Multiline input mode |
-
-### Built-in Tools
-
-Qoder CLI ships with tools for file/directory operations:
-- **Grep** - Search code
-- **Read** - Read files
-- **Write** - Write/edit files
-- **Bash** - Execute shell commands
-- **Glob** - Pattern-based file matching
-- **LS** - List directory contents
-
-### Slash Commands (Complete List)
-
-| Command | Description |
-|---------|-------------|
-| `/login` | Log in to Qoder account |
-| `/help` | Show TUI help |
-| `/init` | Initialize or update `AGENTS.md` memory file |
-| `/memory` | Edit AGENTS.md (user or project level) |
-| `/quest` | **Quest Mode**: Spec-driven delegated task |
-| `/review` | Code review for local changes |
-| `/resume` | List and resume sessions |
-| `/clear` | Clear current session context history |
-| `/compact` | Summarize current session's context history |
-| `/usage` | Show current credit usage |
-| `/status` | Show CLI status: version, model, account, API connectivity, tool status |
-| `/config` | Show system configuration |
-| `/agents` | Subagent commands: list, create, manage |
-| `/bashes` | List running background Bash jobs |
-| `/release-notes` | Show Qoder CLI release notes |
-| `/vim` | Open external editor to edit input |
-| `/feedback` | Send feedback about Qoder CLI |
-| `/quit` | Exit TUI |
-| `/logout` | Log out of Qoder account |
 
 ---
 
@@ -169,10 +81,9 @@ Qoder CLI ships with tools for file/directory operations:
 
 | Flag | Description | Example |
 |------|-------------|---------|
-| `-p` | Run non-interactively (print mode) | `qodercli -p "task"` |
+| `-p` | **Required** - Run non-interactively | `qodercli -p "task"` |
 | `-q` | Quiet mode (hide spinner) | `qodercli -q -p "task"` |
 | `--output-format` | Output format: text, json, stream-json | `qodercli --output-format=json` |
-| `--input-format` | Input format: text, stream-json | `qodercli --input-format=stream-json` |
 | `-w` | Specify workspace directory | `qodercli -w /path/to/project` |
 | `-c` | Continue last session | `qodercli -c -p "continue"` |
 | `-r` | Resume specific session | `qodercli -r <session-id>` |
@@ -180,18 +91,16 @@ Qoder CLI ships with tools for file/directory operations:
 | `--max-turns` | Maximum dialog turns (0 = unlimited) | `qodercli --max-turns=10` |
 | `--max-output-tokens` | Max tokens: 16k, 32k | `qodercli --max-output-tokens=32k` |
 | `--yolo` | Skip permission checks | `qodercli --yolo` |
-| `--dangerously-skip-permissions` | Same as --yolo | `qodercli --dangerously-skip-permissions` |
 | `--allowed-tools` | Allow only specified tools | `qodercli --allowed-tools=READ,WRITE` |
 | `--disallowed-tools` | Disallow specified tools | `qodercli --disallowed-tools=Bash` |
 | `--agents` | JSON object defining custom agents | `qodercli --agents='{"reviewer":{...}}'` |
-| `--with-claude-config` | Load Claude Code configs from .claude folders | `qodercli --with-claude-config` |
 | `--attachment` | Attach image files (repeatable) | `qodercli --attachment=img.png` |
 
 ---
 
 ## 🧠 Model Selection
 
-Qoder CLI uses **automatic model routing** - it selects the globally optimal model based on task characteristics. However, you can override this:
+Qoder CLI uses **automatic model routing** - it selects the globally optimal model based on task characteristics. You can override this:
 
 | Model Value | Use Case | Speed | Quality | Cost |
 |-------------|----------|-------|---------|------|
@@ -204,7 +113,6 @@ Qoder CLI uses **automatic model routing** - it selects the globally optimal mod
 | `q35model` | Qwen 3.5 specific | ⚡⚡⚡ | ⭐⭐⭐⭐ | 💰💰💰 |
 | `mmodel` | MiniMax model | ⚡⚡⚡ | ⭐⭐⭐⭐ | 💰💰💰 |
 | `gmodel` | GPT model family | ⚡⚡ | ⭐⭐⭐⭐⭐ | 💰💰💰💰 |
-| `kmodel` | Other specialized model | ⚡⚡⚡ | ⭐⭐⭐ | 💰💰💰 |
 
 **Recommendations:**
 - **Default**: Use `--model=auto` (let Qoder choose)
@@ -220,10 +128,7 @@ Qoder CLI uses **automatic model routing** - it selects the globally optimal mod
 Quest Mode allows you to write specifications while AI automatically completes development tasks using subagents.
 
 ```bash
-# Start quest mode
-bash workdir:~/project command:"qodercli -p '/quest'"
-
-# Or directly specify quest
+# Quest mode via prompt
 bash workdir:~/project command:"qodercli --model=ultimate -p 'Build a REST API with authentication, rate limiting, and logging'"
 ```
 
@@ -264,14 +169,6 @@ Checklist:
 6. Performance considerations
 ```
 
-### Create a Subagent (Automatic)
-
-```bash
-# In TUI: /agents -> User or Project -> Create new agent
-bash pty:true workdir:~/project command:"qodercli"
-# Then type: /agents -> Create new agent -> "code reviewer for security"
-```
-
 ### Use Subagents
 
 ```bash
@@ -307,16 +204,13 @@ Worktree jobs are concurrent jobs that use Git worktrees to run tasks in paralle
 ### Create a Job
 
 ```bash
-# Basic worktree job
-bash workdir:~/project command:"qodercli --worktree 'Fix issue #78'"
-
-# Non-interactive (print mode)
-bash workdir:~/project command:"qodercli --worktree -p 'Build feature X'"
+# Basic worktree job (non-interactive)
+bash workdir:~/project command:"qodercli --worktree -p 'Fix issue #78'"
 
 # With branch specification
 bash workdir:~/project command:"qodercli --worktree --branch=main -p 'Implement feature'"
 
-# With additional options
+# With max turns
 bash workdir:~/project command:"qodercli --worktree --max-turns=20 -p 'Complex refactoring'"
 ```
 
@@ -325,25 +219,6 @@ bash workdir:~/project command:"qodercli --worktree --max-turns=20 -p 'Complex r
 ```bash
 bash workdir:~/project command:"qodercli jobs --worktree"
 ```
-
-**Output example:**
-```
-Qoder jobs for workspace: /Users/demo/project
-
-Worktree Jobs:
-ID              INIT PROMPT    PATH                                STATUS      CREATED
-11758283139787  [I] hello      ~/.qoder/worktrees/11758283139787   running     5 minutes ago
-11758283382928  [N] hello      ~/.qoder/worktrees/11758283382928   exited      1 minute ago
-
-Total: 3 worktree job(s)
-```
-
-**Field descriptions:**
-- **ID**: Unique job ID
-- **INIT PROMPT**: Initial job description
-- **PATH**: Git worktree directory
-- **STATUS**: running, exited, etc.
-- **CREATED**: Job creation time
 
 ### Delete Jobs
 
@@ -363,9 +238,6 @@ bash workdir:~/project background:true command:"qodercli --worktree -p 'Fix issu
 # Monitor progress
 process action:list
 process action:log sessionId:XXX
-
-# Create PRs after fixes complete
-cd /tmp/worktree-78 && git push -u origin fix/issue-78
 ```
 
 ---
@@ -382,12 +254,6 @@ bash command:"qodercli mcp add <name> -- <command>"
 
 # Example: Playwright for browser control
 bash command:"qodercli mcp add playwright -- npx -y @playwright/mcp@latest"
-
-# With server type (stdio, sse, streamable-http)
-bash command:"qodercli mcp add myserver -t stdio -- npx -y @package/mcp"
-
-# With scope (user or project)
-bash command:"qodercli mcp add myserver -s project -- npx -y @package/mcp"
 ```
 
 ### Recommended MCP Tools
@@ -411,16 +277,7 @@ bash command:"qodercli mcp list"
 
 # Remove server
 bash command:"qodercli mcp remove playwright"
-
-# List shows configuration files:
-# - ~/.qoder.json (user-level, not committed)
-# - ${project}/.mcp.json (project-level, usually committed)
 ```
-
-### MCP Server Files
-
-- **User-level**: `~/.qoder.json` - Not committed to git
-- **Project-level**: `${project}/.mcp.json` - Usually committed
 
 ---
 
@@ -477,7 +334,7 @@ Patterns follow gitignore-style matching:
 
 #### 2. WebFetch Rules
 
-Restrict domains for network fetch tools:
+Restrict domains for network fetch:
 
 ```json
 {
@@ -529,18 +386,10 @@ Qoder CLI uses `AGENTS.md` as memory - content is auto-loaded as context.
 - API documentation
 - Testing requirements
 
-### Automatically Generate
+### Generate/Manage
 
 ```bash
-# In TUI: /init
-bash pty:true workdir:~/project command:"qodercli"
-# Then type: /init
-```
-
-### Manually Manage
-
-```bash
-# Create AGENTS.md in project root
+# Manually create AGENTS.md in project root
 cat > ~/project/AGENTS.md << 'EOF'
 # Project Guidelines
 
@@ -551,129 +400,33 @@ cat > ~/project/AGENTS.md << 'EOF'
 ## Code Style
 - ESLint strict mode
 - Prettier formatting
-
-## Testing
-- Jest for unit tests
-- 80% coverage minimum
 EOF
-
-# In TUI: # to enter memory edit mode (vim-style)
-# In TUI: /memory to choose and edit user/project files
 ```
 
 ---
 
-## ⚡ Commands (Custom Slash Commands)
-
-Commands extend slash functionality via `.md` files.
-
-### Create a Command
-
-Store in:
-- `~/.qoder/commands/<name>.md` - User-level
-- `${project}/commands/<name>.md` - Project-level
-
-**Example: quest.md**
-```markdown
----
-description: "Intelligent workflow orchestrator for feature development"
----
-First use the design subagent for system design, then use the code-review subagent to complete code review, and finally run tests to verify.
-```
-
-### Use Commands
-
-```bash
-# In TUI: /quest
-bash pty:true workdir:~/project command:"qodercli"
-# Then type: /quest
-```
-
----
-
-## 🔔 Hooks
-
-Hooks integrate with external systems at key execution stages.
-
-### Configuration Files
-
-- `~/.qoder/settings.json` - User-level
-- `${project}/.qoder/settings.json` - Project-level
-- `${project}/.qoder/settings.local.json` - Project-level (highest precedence)
-
-### Example: Notification Hook
-
-**settings.json:**
-```json
-{
-  "hooks": {
-    "Notification": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "~/notification.sh"
-          }
-        ]
-      }
-    ]
-  }
-}
-```
-
-**notification.sh:**
-```bash
-#!/bin/bash
-input=$(cat)
-
-sessionId=$(echo $input | jq -r '.session_id')
-messageInfo=$(echo $input | jq -r '.message')
-workspacePath=$(echo $input | jq -r '.cwd')
-
-if [[ "$messageInfo" =~ ^Agent ]]; then
-  osascript -e 'display notification "✅ Task completed." with title "QoderCLI"'
-else
-  osascript -e 'display notification "⌛️ Authorization required." with title "QoderCLI"'
-fi
-
-exit 0
-```
-
-### Available Hook Types
-
-Currently supported:
-- **Notification** - Task completion/authorization notifications
-
-Future hook types (planned):
-- Tool invocation hooks
-- Session intervention hooks
-- Pre/post execution hooks
-
----
-
-## 🛠️ Advanced Startup Options
+## ⚡ Advanced Options
 
 | Option | Description | Example |
 |--------|-------------|---------|
 | `-w` | Specify workspace directory | `qodercli -w /path/to/project` |
-| `-c` | Continue last session | `qodercli -c` |
+| `-c` | Continue last session | `qodercli -c -p "continue"` |
 | `-r` | Resume specific session | `qodercli -r <session-id>` |
 | `--allowed-tools` | Allow only specified tools | `qodercli --allowed-tools=READ,WRITE` |
-| `--disallowed-tools` | Disallow specified tools | `qodercli --disallowed-tools=READ,WRITE` |
+| `--disallowed-tools` | Disallow specified tools | `qodercli --disallowed-tools=Bash` |
 | `--max-turns` | Maximum dialog turns | `qodercli --max-turns=10` |
 | `--yolo` | Skip permission checks | `qodercli --yolo` |
 | `--worktree` | Create worktree job | `qodercli --worktree "task"` |
 | `--branch` | Set branch for worktree | `qodercli --worktree --branch=main` |
 | `--agents` | Define custom agents inline | `qodercli --agents='{...}'` |
 | `--attachment` | Attach image files | `qodercli --attachment=img.png` |
-| `--with-claude-config` | Load .claude folder configs | `qodercli --with-claude-config` |
 
 ---
 
 ## ⚠️ Rules
 
-1. **Use pty:true for TUI mode** - interactive CLI needs a terminal!
-2. **Print mode for automation** - use `-p` flag for non-interactive tasks
+1. **Print mode only** - TUI mode not supported in OpenClaw
+2. **Always use `-p` flag** - Non-interactive mode required
 3. **Respect workdir** - Qoder sees only the specified directory's context
 4. **Monitor with process:log** - check background session progress
 5. **Use worktrees for parallel work** - avoid read/write conflicts
@@ -683,7 +436,6 @@ Future hook types (planned):
 9. **Add MCP servers** - extend capabilities with external tools
 10. **Works in all sessions** - environment variables are inherited automatically
 11. **Use ultimate model for complex tasks** - refactoring, architecture, code review
-12. **Quest mode for spec-driven development** - let AI coordinate subagents
 
 ---
 
@@ -708,7 +460,7 @@ This prevents the user from seeing only "Agent failed before reply" and having n
 For long-running background tasks, append a wake trigger:
 
 ```bash
-bash pty:true workdir:~/project background:true command:"qodercli --model=ultimate 'Build a REST API for todos.
+bash workdir:~/project background:true command:"qodercli --model=ultimate 'Build a REST API for todos.
 
 When completely finished, run: openclaw system event --text \"Done: Built todos REST API with CRUD endpoints\" --mode now'"
 ```
@@ -752,14 +504,11 @@ bash workdir:/shared/project command:"qodercli --model=ultimate -p 'Refactor thi
 
 | Feature | Qoder CLI | Codex | Claude Code |
 |---------|-----------|-------|-------------|
-| TUI Mode | ✅ | ✅ | ✅ |
 | Print Mode | ✅ | ✅ | ❌ |
 | Subagents | ✅ | ❌ | ❌ |
 | Worktrees | ✅ | ❌ | ❌ |
 | MCP Servers | ✅ | ✅ | ✅ |
 | Memory (AGENTS.md) | ✅ | ✅ | ✅ |
-| Custom Commands | ✅ | ❌ | ❌ |
-| Hooks | ✅ | ❌ | ❌ |
 | Model Selection | ✅ (auto-routing) | ❌ | ❌ |
 | Quest Mode | ✅ | ❌ | ❌ |
 | Permission System | ✅ (granular) | ⚠️ | ⚠️ |
@@ -769,7 +518,6 @@ bash workdir:/shared/project command:"qodercli --model=ultimate -p 'Refactor thi
 - Subagents for specialized tasks
 - Worktrees for parallel development
 - Quest mode for spec-driven development
-- Custom commands and hooks
 - Automatic model routing
 - Granular permission system
 - Cross-session compatibility
@@ -785,11 +533,8 @@ qodercli -p "Your prompt"
 # High-quality task (ultimate model)
 qodercli --model=ultimate -p "Your prompt"
 
-# Interactive session (TUI mode, needs PTY)
-qodercli
-
 # Quest mode (spec-driven)
-qodercli -p "/quest"
+qodercli -p "Build a REST API with auth"
 
 # Background task (worktree)
 qodercli --worktree -p "Your task"
@@ -815,19 +560,17 @@ qodercli --agents='{"reviewer":{...}}' -p "Review this"
 ## 🔧 Troubleshooting
 
 ### Not Logged In
+
 ```bash
 # Check status
 qodercli status
 
 # Set environment variable
 export QODER_PERSONAL_ACCESS_TOKEN="your_token"
-
-# Or use TUI login
-qodercli
-# Then: /login
 ```
 
 ### Permission Denied
+
 ```bash
 # Use yolo mode (caution)
 qodercli --yolo -p "task"
@@ -835,20 +578,24 @@ qodercli --yolo -p "task"
 # Or configure permissions in ~/.qoder/settings.json
 ```
 
-### TUI Not Working
-```bash
-# Ensure PTY mode
-bash pty:true command:"qodercli"
-
-# Check terminal compatibility
-qodercli --version
-```
-
 ### Model Selection Issues
+
 ```bash
 # Explicitly specify model
 qodercli --model=ultimate -p "task"
 
 # Or use auto for automatic routing
 qodercli --model=auto -p "task"
+```
+
+### TUI Mode Error
+
+**TUI mode is NOT supported in OpenClaw.** Always use Print mode:
+
+```bash
+# ✅ Correct
+qodercli -p "Your task"
+
+# ❌ Wrong (will fail)
+qodercli  # TUI requires interactive terminal
 ```
