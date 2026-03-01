@@ -1,6 +1,6 @@
 ---
 name: qoder-cli
-description: "Delegate coding tasks to Qoder CLI using Print mode (non-interactive). Use when: (1) building/creating new features or apps, (2) code reviews, (3) refactoring, (4) iterative coding that needs file exploration. Supports subagents, worktrees, MCP servers, quest mode, commands, and hooks. Includes timeout prevention strategies (background execution, auto-notify, worktrees). Works in all session types. NOT for: simple one-liner fixes (just edit), reading code (use read tool). Requires qodercli installed."
+description: "Delegate coding tasks to Qoder CLI using Print mode (non-interactive). Use when: (1) building/creating new features or apps, (2) code reviews, (3) refactoring, (4) iterative coding that needs file exploration. Supports subagents, worktrees, quest mode, commands, and hooks. Includes timeout prevention strategies (background execution, auto-notify, worktrees). Works in all session types. NOT for: simple one-liner fixes (just edit), reading code (use read tool). Requires qodercli installed."
 metadata: { "openclaw": { "emoji": "🤖", "requires": { "anyBins": ["qodercli"] } } }
 ---
 
@@ -311,9 +311,11 @@ process action:log sessionId:XXX
 
 ---
 
-## 🔌 MCP Servers
+## 🔌 MCP Servers (Coming Soon)
 
-Qoder CLI integrates with any standard MCP (Model Context Protocol) tool.
+> **Note:** MCP server integration is currently disabled. This section is reserved for future updates.
+
+<!-- MCP content temporarily disabled
 
 ### Add MCP Servers
 
@@ -355,6 +357,8 @@ bash command:"qodercli mcp remove playwright"
 
 - **User-level**: `~/.qoder.json` - Won't be committed
 - **Project-level**: `${project}/.mcp.json` - Usually committed
+
+-->
 
 ---
 
@@ -612,16 +616,12 @@ chmod +x ~/notification.sh
 6. **Initialize AGENTS.md** - Helps Qoder understand project context
 7. **Configure permissions** - Set appropriate access rules per project
 8. **Leverage subagents** - Specialized agents for specific tasks
-9. **Add MCP servers** - Extend capabilities with external tools
-10. **Works in all sessions** - Environment variables are inherited automatically
-11. **Use ultimate model for complex tasks** - Refactoring, architecture, code review
-12. **Use Commands for reusable workflows** - Define custom slash commands via `.md` files
-13. **Configure Hooks for notifications** - Get notified when tasks complete
-14. **Manage worktree jobs** - Use `jobs --worktree` to view, `rm` to delete
-15. **Prevent timeouts** - Use `background:true` for tasks >2 minutes
-16. **Always notify user** - Send start message + completion notification
-17. **Break large tasks** - Split multi-hour work into phases
-18. **Use --max-turns** - Control duration for shorter tasks
+9. **Configure Hooks for notifications** - Get notified when tasks complete
+10. **Manage worktree jobs** - Use `jobs --worktree` to view, `rm` to delete
+11. **Prevent timeouts** - Use `background:true` for tasks >2 minutes
+12. **Always notify user** - Send start message + completion notification
+13. **Break large tasks** - Split multi-hour work into phases
+14. **Use --max-turns** - Control duration for shorter tasks
 
 ---
 
@@ -795,7 +795,7 @@ bash workdir:/shared/project command:"qodercli --model=ultimate -p 'Refactor thi
 | Print Mode         | ✅                | ✅    | ❌          |
 | Subagents          | ✅                | ❌    | ❌          |
 | Worktrees          | ✅                | ❌    | ❌          |
-| MCP Servers        | ✅                | ✅    | ✅          |
+| MCP Servers        | 🚧 Coming Soon    | ✅    | ✅          |
 | Memory (AGENTS.md) | ✅                | ✅    | ✅          |
 | Model Selection    | ✅ (auto-routing) | ❌    | ❌          |
 | Quest Mode         | ✅                | ❌    | ❌          |
@@ -814,6 +814,7 @@ bash workdir:/shared/project command:"qodercli --model=ultimate -p 'Refactor thi
 - **Hooks** - external integrations and notifications
 - **Granular permission system** - fine-grained access control
 - **Cross-session compatibility** - works everywhere
+- **Timeout prevention** - background execution + auto-notify strategies
 
 ---
 
@@ -862,14 +863,16 @@ qodercli --max-turns=10 -p "Fix the bug"
 # Attach image files
 qodercli --attachment=img.png -p "Analyze this screenshot"
 
+# Worktree job management
+qodercli jobs --worktree
+qodercli rm <jobId>
+
+<!-- MCP server management (Coming Soon)
 # MCP server management
 qodercli mcp list
 qodercli mcp add playwright -- npx -y @playwright/mcp@latest
 qodercli mcp remove playwright
-
-# Worktree job management
-qodercli jobs --worktree
-qodercli rm <jobId>
+-->
 
 # === Timeout Prevention ===
 
@@ -945,6 +948,7 @@ qodercli jobs --worktree
 qodercli rm <jobId>
 ```
 
+<!-- MCP troubleshooting (Coming Soon)
 ### MCP Server Not Working
 
 ```bash
@@ -959,6 +963,7 @@ qodercli mcp add <name> -- <command>
 # User-level: ~/.qoder.json
 # Project-level: ${project}/.mcp.json
 ```
+-->
 
 ### Output Truncated
 
