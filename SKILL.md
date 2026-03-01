@@ -1,6 +1,6 @@
 ---
 name: qoder-cli
-description: "Delegate coding tasks to Qoder CLI using Print mode (non-interactive). Use when: (1) building/creating new features or apps, (2) code reviews, (3) refactoring, (4) iterative coding that needs file exploration. Supports subagents, worktrees, MCP servers, quest mode, commands, and hooks. Works in all session types (direct chat, group chat, Discord, etc.). NOT for: simple one-liner fixes (just edit), reading code (use read tool). Requires qodercli installed."
+description: "Delegate coding tasks to Qoder CLI using Print mode (non-interactive). Use when: (1) building/creating new features or apps, (2) code reviews, (3) refactoring, (4) iterative coding that needs file exploration. Supports subagents, worktrees, MCP servers, quest mode, commands, and hooks. Includes timeout prevention strategies (background execution, auto-notify, worktrees). Works in all session types. NOT for: simple one-liner fixes (just edit), reading code (use read tool). Requires qodercli installed."
 metadata: { "openclaw": { "emoji": "🤖", "requires": { "anyBins": ["qodercli"] } } }
 ---
 
@@ -618,6 +618,10 @@ chmod +x ~/notification.sh
 12. **Use Commands for reusable workflows** - Define custom slash commands via `.md` files
 13. **Configure Hooks for notifications** - Get notified when tasks complete
 14. **Manage worktree jobs** - Use `jobs --worktree` to view, `rm` to delete
+15. **Prevent timeouts** - Use `background:true` for tasks >2 minutes
+16. **Always notify user** - Send start message + completion notification
+17. **Break large tasks** - Split multi-hour work into phases
+18. **Use --max-turns** - Control duration for shorter tasks
 
 ---
 
@@ -637,17 +641,119 @@ This prevents the user from seeing only "Agent failed before reply" and having n
 
 ---
 
-## Auto-Notify on Completion
+## ⏱️ Handling Long-Running Tasks (Timeout Prevention)
 
-For long-running background tasks, append a wake trigger:
+Qoder CLI tasks can take minutes to hours. Use these strategies to avoid agent timeouts:
+
+### Strategy 1: Background Execution + Auto-Notify (Recommended)
+
+For tasks expected to take >2 minutes:
 
 ```bash
-bash workdir:~/project background:true command:"qodercli --model=ultimate 'Build a REST API for todos.
+# Run in background with completion notification
+bash workdir:~/project background:true command:"qodercli --model=ultimate -p 'Build a REST API for todos'
 
-When completely finished, run: openclaw system event --text \"Done: Built todos REST API with CRUD endpoints\" --mode now'"
+# Wake trigger when done
+openclaw system event --text 'Qoder completed: Built todos REST API' --mode now"
 ```
 
-This triggers an immediate wake event — you get pinged in seconds, not minutes.
+**Benefits:**
+- Agent won't timeout (runs in background)
+- User gets notified immediately when done
+- You can monitor progress asynchronously
+
+### Strategy 2: Worktree for Parallel Long Tasks
+
+For complex tasks that need isolation:
+
+```bash
+# Create worktree job (runs in isolated container)
+bash workdir:~/project background:true command:"qodercli --worktree --branch=main -p 'Refactor authentication module'
+
+# Notify when complete
+openclaw system event --text 'Worktree job completed: Auth refactoring done' --mode now"
+```
+
+**Benefits:**
+- Isolated from main workspace
+- Can run multiple jobs in parallel
+- No file conflicts
+
+### Strategy 3: Break Into Smaller Tasks
+
+For very large tasks, split into phases:
+
+```bash
+# Phase 1: Analysis
+bash workdir:~/project command:"qodercli -p 'Analyze the codebase and create a refactoring plan'"
+
+# Phase 2: Implementation (background)
+bash workdir:~/project background:true command:"qodercli --model=ultimate -p 'Implement the refactoring plan from phase 1'
+
+openclaw system event --text 'Phase 2 complete: Refactoring implemented' --mode now"
+
+# Phase 3: Testing (after phase 2 completes)
+bash workdir:~/project command:"qodercli -p 'Write tests for the refactored code'"
+```
+
+### Strategy 4: Use --max-turns to Control Duration
+
+Limit the conversation turns to prevent runaway tasks:
+
+```bash
+# Limit to 10 turns (~5-10 minutes)
+bash workdir:~/project command:"qodercli --max-turns=10 -p 'Fix the login bug'"
+
+# For longer tasks, use background + notify
+bash workdir:~/project background:true command:"qodercli --max-turns=30 -p 'Implement user registration'
+
+openclaw system event --text 'Registration feature complete' --mode now"
+```
+
+### Strategy 5: Periodic Progress Updates
+
+For very long tasks, add intermediate checkpoints:
+
+```bash
+bash workdir:~/project background:true command:"
+qodercli --model=ultimate -p 'Build complete CRUD app'
+
+# Intermediate notification after build
+echo 'Build phase complete, starting tests...' > /tmp/qoder_progress
+
+# Final notification
+openclaw system event --text 'CRUD app complete: Build + Tests done' --mode now
+"
+```
+
+---
+
+## 📊 Timeout Prevention Quick Reference
+
+| Task Duration | Strategy | Example |
+| ------------- | -------- | ------- |
+| <1 min | Direct (no background) | `qodercli -p "Fix typo"` |
+| 1-5 min | Direct with `--max-turns` | `qodercli --max-turns=10 -p "Add validation"` |
+| 5-30 min | Background + notify | `background:true ... openclaw system event` |
+| 30+ min | Worktree + background | `--worktree background:true ...` |
+| Hours | Break into phases | Multiple sequential tasks |
+
+---
+
+## ⚠️ Critical: Always Notify User
+
+When using background execution:
+
+1. **Tell user immediately** what's running and where
+2. **Give ETA** if possible (e.g., "This will take ~10 minutes")
+3. **Explain notification** (e.g., "I'll ping you when it's done")
+4. **Follow through** - send the completion notification
+
+**Example user message:**
+> "🚀 Starting: Building REST API with authentication (this will take ~15 minutes). I'll notify you when it's complete!"
+
+**Completion message:**
+> "✅ Done: REST API built successfully! Created 5 files with CRUD endpoints + JWT auth. Check `/Users/clawbot/.openclaw/workspace/projects/todo-api`"
 
 ---
 
@@ -764,6 +870,19 @@ qodercli mcp remove playwright
 # Worktree job management
 qodercli jobs --worktree
 qodercli rm <jobId>
+
+# === Timeout Prevention ===
+
+# Background task with auto-notify (>2 min tasks)
+bash workdir:~/project background:true command:"qodercli --model=ultimate -p 'Large task'
+
+openclaw system event --text 'Task complete' --mode now"
+
+# Quick task with turn limit (<2 min)
+qodercli --max-turns=10 -p "Quick fix"
+
+# Long task in worktree (30+ min)
+bash workdir:~/project background:true command:"qodercli --worktree --max-turns=50 -p 'Major refactoring'"
 ```
 
 ---
@@ -850,3 +969,30 @@ qodercli --max-output-tokens=32k -p "task"
 # Or use JSON output for structured parsing
 qodercli --output-format=json -p "task"
 ```
+
+### Task Timing Out
+
+**Problem:** Qoder CLI task takes too long, agent times out before completion.
+
+**Solutions:**
+
+```bash
+# 1. Use background execution for long tasks
+bash workdir:~/project background:true command:"qodercli --model=ultimate -p 'Large task'
+
+openclaw system event --text 'Task complete' --mode now"
+
+# 2. Limit turns for shorter tasks
+qodercli --max-turns=10 -p "Quick fix"
+
+# 3. Use worktree for isolation
+bash workdir:~/project background:true command:"qodercli --worktree -p 'Complex refactoring'"
+
+# 4. Break into phases
+# Phase 1
+qodercli -p "Analyze and create plan"
+# Phase 2 (background)
+bash workdir:~/project background:true command:"qodercli -p 'Implement plan'"
+```
+
+**Best Practice:** If a task might take >2 minutes, use `background:true` from the start.
